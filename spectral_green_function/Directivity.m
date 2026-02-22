@@ -7,7 +7,6 @@ function [Dir, Prad] = Directivity(E_tot, Theta, dth, dph, er, r)
     eta0 = 120*pi;
     zeta = eta0 / sqrt(er);
 
-    % Radiation intensity
     U = (abs(E_tot).^2) .* (r.^2) ./ (2*zeta);
 
     % Mask out invalid points (NaN/Inf)

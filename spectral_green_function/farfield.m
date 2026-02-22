@@ -9,7 +9,6 @@ function [Eth, Eph] = farfield(k0, R_FF, TH, PH, KZ, Gxx, Gyx, Gzx, Jx)
 % Outputs:
 %   Eth,Eph : spherical components (same size)
 
-    % Basic size checks 
     if ~isequal(size(TH), size(PH), size(Gxx), size(Gyx), size(Gzx), size(Jx))
         error('TH, PH, Gxx, Gyx, Gzx, and Jx must all be the same size.');
     end
@@ -17,12 +16,10 @@ function [Eth, Eph] = farfield(k0, R_FF, TH, PH, KZ, Gxx, Gyx, Gzx, Jx)
     k = k0;
     common = exp(-1i*k*R_FF) ./ (2*pi*R_FF);
 
-    % Apply the slide formula (x-hat current => first column)
     Ex = 1i .* KZ .* Gxx .* Jx .* common;
     Ey = 1i .* KZ .* Gyx .* Jx .* common;
     Ez = 1i .* KZ .* Gzx .* Jx .* common;
 
-    % Convert Cartesian -> spherical (uses TH, PH)
     cth = cos(TH);  sth = sin(TH);
     cph = cos(PH);  sph = sin(PH);
 

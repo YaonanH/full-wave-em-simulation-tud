@@ -22,21 +22,17 @@ function [ej_SGF] = EJ_SGF(er, k0, KX, KY, sgn)
         error('KX and KY must be the same size (from meshgrid).');
     end
 
-    % Medium wavenumber and impedance (assuming mu_r = 1)
     k    = k0 * sqrt(er);
     eta0 = 120*pi;
     zeta = eta0 / sqrt(er);
 
-    % kz definition from your slide:
     kz = -1i .* sqrt( -(k.^2 - KX.^2 - KY.^2) );
 
-    % Prefactor
     pref = -zeta ./ (2 .* k .* kz);
 
     [Ny, Nx] = size(KX);
     ej_SGF = zeros(Ny, Nx, 3, 3, 'like', kz);
 
-    % Fill entries: G(:,:,row,col) corresponds to G_row,col
     ej_SGF(:,:,1,1) = pref .* (k.^2 - KX.^2);
     ej_SGF(:,:,1,2) = pref .* (-KX.*KY);
     ej_SGF(:,:,1,3) = pref .* (-KX.*(sgn.*kz));
