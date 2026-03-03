@@ -25,7 +25,7 @@ function [ej_SGF] = EJ_SGF(er, k0, KX, KY, sgn)
     k    = k0 * sqrt(er);
     eta0 = 120*pi;
     zeta = eta0 / sqrt(er);
-
+        
     kz = -1i .* sqrt( -(k.^2 - KX.^2 - KY.^2) );
 
     pref = -zeta ./ (2 .* k .* kz);

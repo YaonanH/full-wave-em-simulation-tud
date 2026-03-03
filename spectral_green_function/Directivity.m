@@ -1,5 +1,5 @@
 function [Dir, Prad] = Directivity(E_tot, Theta, dth, dph, er, r)
-
+% This function assumes the full converage of the mesh
     if ~isequal(size(E_tot), size(Theta))
         error('E_tot and Theta must be the same size.');
     end

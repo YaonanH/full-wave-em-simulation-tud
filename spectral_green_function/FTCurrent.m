@@ -10,10 +10,6 @@ function Jx = FTCurrent(k0, er, KX, KY, l, w)
     T = sinc(x/pi);
 
     denom = (keq^2 - KX.^2) .* sin(keq*l/2);
-
-    tol = 1e-12 * max(1, abs(keq^2 * sin(keq*l/2)));
-    denom(abs(denom) < tol) = tol;
-
     L = (2*keq) .* (cos(KX*l/2) - cos(keq*l/2)) ./ denom;
 
     Jx = L .* T;
