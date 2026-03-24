@@ -7,7 +7,7 @@ u0 = 0.65;
 v0 = 0.65;
 r = 1;
 
-lambda = 3e8 / f;
+lambda_0 = 3e8 / f;
 eta_0 = 120 * pi;
 eta_d = eta_0 / sqrt(er);
 
@@ -89,3 +89,39 @@ title('Fresnel Transmission Coefficients');
 legend('Parallel Polarization - TM', 'Perpendicular Polarization - TE', 'Location', 'south');
 xlim([0 20]);
 ylim([0 1]);
+
+%% Plot power ratio for a lens
+D_l = 10 * lambda_0; % lens diameter
+eccentricity = 1 / sqrt(er);
+theta_c = asin(eccentricity);
+theta_0 = pi/2 - theta_c; % angular domain of the lens
+
+r_min = (D_l / 2) / sin(theta_0);
+a = r_min * (1 - eccentricity * cos(theta_0)) / (1 - eccentricity^2);
+c = a * eccentricity;
+b = sqrt(a^2 - c^2);
+
+rho = linspace(eps, D_l/2, 1000);
+phi_lens = linspace(eps, 2*pi, 1000);
+[RHO, PHI_lens] = meshgrid(rho, phi_lens);
+
+z = a * sqrt(1 - (RHO.^2 ./ b^2)) + c;
+TH_lens = atan(RHO ./ z);
+
+TH_i_lens = acos((1 - eccentricity * cos(TH_lens)) ./ ...
+    sqrt(1 - 2 * eccentricity * cos(TH_lens) + eccentricity^2));
+
+[tau_prp_lens, tau_par_lens, th_t_lens] = Fresnel_Tx_coeff(TH_i_lens, er);
+tx_i_prp_ratio_lens = abs(tau_prp_lens).^2 .* (eta_d * cos(th_t_lens)) ./ (cos(TH_i_lens) * eta_0);
+tx_i_par_ratio_lens = abs(tau_par_lens).^2 .* (eta_d * cos(th_t_lens)) ./ (cos(TH_i_lens) * eta_0);
+
+figure;hold on; grid on;
+plot(rad2deg(TH_lens(:)), tx_i_prp_ratio_lens(:), 'r-', 'LineWidth', 1.2);
+plot(rad2deg(TH_lens(:)), tx_i_par_ratio_lens(:), 'b--', 'LineWidth', 1.2);
+xlabel('\theta (deg)');
+ylabel('Transmission Coefficient');
+title('Fresnel Transmission Coefficients for the Lens');
+legend('Parallel Polarization - TM', 'Perpendicular Polarization - TE', 'Location', 'south');
+xlim([0 90]);
+ylim([0 1]);
+
