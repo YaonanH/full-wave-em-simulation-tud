@@ -7,6 +7,10 @@ u0 = 0.65;
 v0 = 0.65;
 r = 1;
 
+lambda = 3e8 / f;
+eta_0 = 120 * pi;
+eta_d = eta_0 / sqrt(er);
+
 theta = linspace(eps, pi/2 - eps, 1000);
 phi = linspace(0, 2*pi, 1000);
 [TH, PH] = meshgrid(theta, phi);
@@ -23,28 +27,28 @@ Eabs_dB_norm = max(Eabs_dB_norm, -40);
 phi_deg = rad2deg(phi);
 theta_deg = rad2deg(theta);
 
+%locate the indexes for phi = 0, 90, 180, 270 degrees
 [~, idx_phi_0] = min(abs(phi_deg - 0));
 [~, idx_phi_90] = min(abs(phi_deg - 90));
 [~, idx_phi_180] = min(abs(phi_deg - 180));
 [~, idx_phi_270] = min(abs(phi_deg - 270));
 
-cut_phi_0 = Eabs_dB(idx_phi_0, :) - max(Eabs_dB(:));
-cut_phi_90 = Eabs_dB(idx_phi_90, :) - max(Eabs_dB(:));
-cut_phi_180 = Eabs_dB(idx_phi_180, :) - max(Eabs_dB(:));
-cut_phi_270 = Eabs_dB(idx_phi_270, :) - max(Eabs_dB(:));
+cut_phi_0 = Eabs_dB_norm(idx_phi_0, :);
+cut_phi_90 = Eabs_dB_norm(idx_phi_90, :);
+cut_phi_180 = Eabs_dB_norm(idx_phi_180, :);
+cut_phi_270 = Eabs_dB_norm(idx_phi_270, :);
 
 theta_plot = [-fliplr(theta_deg), theta_deg];
 cut_phi0_phi180 = [fliplr(cut_phi_180), cut_phi_0];
-cut_phi90_phi270 = [-fliplr(theta_deg), theta_deg];
-cut_phi90_phi270_vals = [fliplr(cut_phi_270), cut_phi_90];
+cut_phi90_phi270 = [fliplr(cut_phi_270), cut_phi_90];
 
 cut_phi0_phi180 = max(cut_phi0_phi180, -40);
-cut_phi90_phi270_vals = max(cut_phi90_phi270_vals, -40);
+cut_phi90_phi270 = max(cut_phi90_phi270, -40);
 
 figure;
 plot(theta_plot, cut_phi0_phi180, 'k-', 'LineWidth', 1.2);
 hold on; grid on;
-plot(cut_phi90_phi270, cut_phi90_phi270_vals, 'b--', 'LineWidth', 1.2);
+plot(theta_plot, cut_phi90_phi270, 'b--', 'LineWidth', 1.2);
 xlabel('\theta (deg)');
 ylabel('|E| / E_{max} (dB)');
 title('Normalized farfield of the feed');
@@ -65,3 +69,23 @@ clim([-40 0]);
 view(2);
 
 fprintf('Radiated power inside the lens: %.6g W (for unit field scaling)\n', Prad_feed);
+
+%% Plot transmitted power with respect to the incident power
+theta_i = linspace(eps, deg2rad(20), 1000);
+theta_i_deg = rad2deg(theta_i);
+
+[tau_prp, tau_par, th_t] = Fresnel_Tx_coeff(theta_i, er);
+
+figure;hold on; grid on;
+
+tx_i_prp_ratio = abs(tau_prp).^2 .* (eta_d * cos(th_t)) ./ (cos(theta_i) * eta_0);
+tx_i_par_ratio = abs(tau_par).^2 .* (eta_d * cos(th_t)) ./ (cos(theta_i) * eta_0);
+
+plot(theta_i_deg, tx_i_prp_ratio, 'r-', 'LineWidth', 1.2);
+plot(theta_i_deg, tx_i_par_ratio, 'b--', 'LineWidth', 1.2);
+xlabel('\theta (deg)');
+ylabel('Transmission Coefficient');
+title('Fresnel Transmission Coefficients');
+legend('Parallel Polarization - TM', 'Perpendicular Polarization - TE', 'Location', 'south');
+xlim([0 20]);
+ylim([0 1]);
