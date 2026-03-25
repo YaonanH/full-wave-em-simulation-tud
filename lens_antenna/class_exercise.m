@@ -125,11 +125,11 @@ ylim([0 1]);
 
 %%  Truncated lens 
 D = 10 * lambda_0; % lens diameter
-theta_0_truncated = deg2rad(50); % angular domain of the truncated lens
+theta_0_truncated = deg2rad(73); % angular domain of the truncated lens
 e = 1 / sqrt(er);
 
-rho = linspace(eps, D/2 + eps, 101);
-phi_lens = linspace(eps, 2*pi + eps, 101);
+rho = linspace(eps, D/2, 201);
+phi_lens = linspace(eps, 2*pi, 201);
 [RHO, PHI_lens] = meshgrid(rho, phi_lens);
 
 r_min_truncated = (D / 2) / sin(theta_0_truncated);
@@ -147,11 +147,8 @@ r_truncated = a_truncated * (1 - e^2) ./ (1 - e * cos(TH_truncated));
 U_truncated = sin(TH_truncated) .* cos(PHI_lens);
 V_truncated = sin(TH_truncated) .* sin(PHI_lens);
 
-Jsx_ref = max(abs(Jsx_truncated(:)));
-Jsy_ref = max(abs(Jsy_truncated(:)));
-
-Jsx_truncated_dB = 20 * log10(abs(Jsx_truncated) / Jsx_ref);
-Jsy_truncated_dB = 20 * log10(abs(Jsy_truncated) / Jsy_ref);
+Jsx_truncated_dB = 20 * log10(abs(Jsx_truncated));
+Jsy_truncated_dB = 20 * log10(abs(Jsy_truncated));
 
 [~, idx_phi_0_lens] = min(abs(rad2deg(phi_lens) - 0));
 [~, idx_phi_90_lens] = min(abs(rad2deg(phi_lens) - 90));
@@ -197,11 +194,14 @@ colorbar;
 %% Far field of the truncated lens antenna
 k0 = 2 * pi / lambda_0;
 
-phi_ff = phi_lens;
+theta_ff = linspace(eps, pi/2, 61);
+phi_ff = linspace(0, 2*pi, 121);
+phi_ff(end) = [];
 
-TH_ff = TH_truncated;
-PH_ff = PHI_lens;
+[TH_ff, PH_ff] = meshgrid(theta_ff, phi_ff);
 R_ff = 1;
+dth_ff = theta_ff(2) - theta_ff(1);
+dph_ff = phi_ff(2) - phi_ff(1);
 
 K_xf = k0 * sin(TH_ff) .* cos(PH_ff);
 K_yf = k0 * sin(TH_ff) .* sin(PH_ff);
@@ -221,14 +221,13 @@ for m = 1:size(TH_ff, 1)
 end
 
 G_ff = EJ_SGF(1, k0, K_xf, K_yf);
-common_ff = exp(-1j * k0 * R_ff) ./ (2 * pi * R_ff);
+[Eth_ff_x, Eph_ff_x] = farfield(k0, R_ff, TH_ff, PH_ff, K_zf, ...
+    G_ff(:,:,1,1), G_ff(:,:,2,1), G_ff(:,:,3,1), J_sx_ff);
+[Eth_ff_y, Eph_ff_y] = farfield(k0, R_ff, TH_ff, PH_ff, K_zf, ...
+    G_ff(:,:,1,2), G_ff(:,:,2,2), G_ff(:,:,3,2), J_sy_ff);
 
-Ex_ff = 1j * K_zf .* (G_ff(:,:,1,1) .* J_sx_ff + G_ff(:,:,1,2) .* J_sy_ff) .* common_ff;
-Ey_ff = 1j * K_zf .* (G_ff(:,:,2,1) .* J_sx_ff + G_ff(:,:,2,2) .* J_sy_ff) .* common_ff;
-Ez_ff = 1j * K_zf .* (G_ff(:,:,3,1) .* J_sx_ff + G_ff(:,:,3,2) .* J_sy_ff) .* common_ff;
-
-Eth_ff = Ex_ff .* cos(TH_ff) .* cos(PH_ff) + Ey_ff .* cos(TH_ff) .* sin(PH_ff) - Ez_ff .* sin(TH_ff);
-Eph_ff = -Ex_ff .* sin(PH_ff) + Ey_ff .* cos(PH_ff);
+Eth_ff = Eth_ff_x + Eth_ff_y;
+Eph_ff = Eph_ff_x + Eph_ff_y;
 
 Eabs_ff = sqrt(abs(Eth_ff).^2 + abs(Eph_ff).^2);
 Eabs_ff_dB_norm = 20 * log10(Eabs_ff / (max(Eabs_ff(:)) + eps));
@@ -242,9 +241,9 @@ Eabs_ff_dB_norm_cut_phi_0 = Eabs_ff_dB_norm(idx_phi_0_lens, :);
 Eabs_ff_dB_norm_cut_phi_90 = Eabs_ff_dB_norm(idx_phi_90_lens, :);
 
 figure;
-plot(rad2deg(TH_truncated(idx_phi_0_lens, :)), Eabs_ff_dB_norm_cut_phi_0, 'LineWidth', 1.5);
+plot(rad2deg(theta_ff), Eabs_ff_dB_norm_cut_phi_0, 'LineWidth', 1.5);
 hold on; grid on;
-plot(rad2deg(TH_truncated(idx_phi_90_lens, :)), Eabs_ff_dB_norm_cut_phi_90, 'LineWidth', 1.5);
+plot(rad2deg(theta_ff), Eabs_ff_dB_norm_cut_phi_90, 'LineWidth', 1.5);
 xlabel('\theta (deg)');
 ylabel('|E_{ff}| (dB)');
 title('Normalized Far Field Cuts');
@@ -264,3 +263,16 @@ ylim([-1 1]);
 clim([-40 0]);
 colormap(jet);
 colorbar;
+
+%% Directivity, gain and radiation efficiency
+[D_lens, P_rad_lens] = Directivity(Eabs_ff, TH_ff, dth_ff, dph_ff, 1, R_ff);
+eta_rad_lens = P_rad_lens / Prad_feed;
+G_lens = D_lens * eta_rad_lens;
+
+D_max = max(D_lens(:));
+G_max = max(G_lens(:));
+
+fprintf('Lens radiated power: %.6g W\n', P_rad_lens);
+fprintf('Radiation efficiency: %.2f%%\n', 100 * eta_rad_lens);
+fprintf('Maximum directivity: %.2f dBi\n', 10 * log10(D_max));
+fprintf('Maximum gain: %.2f dBi\n', 10 * log10(G_max));

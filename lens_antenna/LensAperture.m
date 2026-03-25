@@ -7,8 +7,8 @@ function [Jx, Jy] = LensAperture(th, ph, r, er, u0, v0, D, th_0)
     v = sin(th) .* sin(ph);
     amp = exp(-((u ./ u0).^2 + (v ./ v0).^2));
 
-    Ei_th = amp .* sin(ph) ./ r;
-    Ei_ph = amp .* cos(ph) ./ r;
+    Ei_th = amp .* sin(ph);
+    Ei_ph = amp .* cos(ph);
 
     den = sqrt(1 + e^2 - 2 * e .* cos(th));
     cos_th_i = (1 - e .* cos(th)) ./ den;
