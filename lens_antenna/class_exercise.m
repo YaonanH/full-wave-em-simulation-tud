@@ -11,8 +11,8 @@ lambda_0 = 3e8 / f;
 eta_0 = 120 * pi;
 eta_d = eta_0 / sqrt(er);
 
-theta = linspace(eps, pi/2 - eps, 1000);
-phi = linspace(0, 2*pi, 1000);
+theta = linspace(eps, pi/2, 181);
+phi = linspace(eps, 2*pi, 181);
 [TH, PH] = meshgrid(theta, phi);
 
 [Eth_feed, Eph_feed, Prad_feed] = FeedLens(f, er, r, TH, PH, u0, v0);
@@ -71,7 +71,7 @@ view(2);
 fprintf('Radiated power inside the lens: %.6g W (for unit field scaling)\n', Prad_feed);
 
 %% Plot transmitted power with respect to the incident power
-theta_i = linspace(eps, deg2rad(20), 1000);
+theta_i = linspace(eps, deg2rad(20), 181);
 theta_i_deg = rad2deg(theta_i);
 
 [tau_prp, tau_par, th_t] = Fresnel_Tx_coeff(theta_i, er);
@@ -101,7 +101,7 @@ a = r_min * (1 - eccentricity * cos(theta_0)) / (1 - eccentricity^2);
 c = a * eccentricity;
 b = sqrt(a^2 - c^2);
 
-rho = linspace(eps, D_l/2, 1000);
+rho = linspace(eps, D_l/2, 181);
 
 z = a * sqrt(1 - (rho.^2 ./ b^2)) + c;
 th_lens = atan(rho ./ z);
@@ -125,11 +125,11 @@ ylim([0 1]);
 
 %%  Truncated lens 
 D = 10 * lambda_0; % lens diameter
-theta_0_truncated = deg2rad(73); % angular domain of the truncated lens
+theta_0_truncated = deg2rad(50); % angular domain of the truncated lens
 e = 1 / sqrt(er);
 
-rho = linspace(eps, D/2, 201);
-phi_lens = linspace(eps, 2*pi, 201);
+rho = linspace(eps, D/2, 181);
+phi_lens = linspace(eps, 2*pi, 181);
 [RHO, PHI_lens] = meshgrid(rho, phi_lens);
 
 r_min_truncated = (D / 2) / sin(theta_0_truncated);
@@ -194,8 +194,8 @@ colorbar;
 %% Far field of the truncated lens antenna
 k0 = 2 * pi / lambda_0;
 
-theta_ff = linspace(eps, pi/2, 61);
-phi_ff = linspace(0, 2*pi, 121);
+theta_ff = linspace(eps, pi/2 - eps, 181);
+phi_ff = linspace(eps, 2*pi, 181);
 phi_ff(end) = [];
 
 [TH_ff, PH_ff] = meshgrid(theta_ff, phi_ff);
@@ -240,14 +240,25 @@ phi_ff_deg = rad2deg(phi_ff);
 Eabs_ff_dB_norm_cut_phi_0 = Eabs_ff_dB_norm(idx_phi_0_lens, :);
 Eabs_ff_dB_norm_cut_phi_90 = Eabs_ff_dB_norm(idx_phi_90_lens, :);
 
+a_airy = D / 2;
+x_airy = k0 * a_airy * sin(theta_ff);
+airy = 2 * pi * a_airy^2 .* besselj(1, x_airy) ./ x_airy;
+airy(x_airy == 0) = pi * a_airy^2;
+airy_dB_norm = 20 * log10(abs(airy) / max(abs(airy)));
+airy_dB_norm = max(airy_dB_norm, -40);
+
 figure;
-plot(rad2deg(theta_ff), Eabs_ff_dB_norm_cut_phi_0, 'LineWidth', 1.5);
 hold on; grid on;
+plot(rad2deg(theta_ff), Eabs_ff_dB_norm_cut_phi_0, 'LineWidth', 1.5);
 plot(rad2deg(theta_ff), Eabs_ff_dB_norm_cut_phi_90, 'LineWidth', 1.5);
+plot(rad2deg(theta_ff), airy_dB_norm, 'k--', 'LineWidth', 1.2);
+
 xlabel('\theta (deg)');
 ylabel('|E_{ff}| (dB)');
 title('Normalized Far Field Cuts');
-legend('\phi = 0 deg. cut', '\phi = 90 deg. cut', 'Location', 'northeast');
+legend('\phi = 0 deg. cut', '\phi = 90 deg. cut', 'Airy pattern', 'Location', 'northeast');
+xlim([0 90]);
+ylim([-40 0]);
 
 U_ff = sin(TH_ff) .* cos(PH_ff);
 V_ff = sin(TH_ff) .* sin(PH_ff);
