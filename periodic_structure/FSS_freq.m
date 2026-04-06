@@ -59,26 +59,15 @@ for idx_f = 1:numel(f)
 end
 
 
-
-figure('Color', 'w');
-hold on; box on; grid on;
-plot(f, real(Zin_active), 'k-', 'LineWidth', 1.2);
-plot(f, imag(Zin_active), 'k--', 'LineWidth', 0.9);
-xline(10e9, 'k:', 'LineWidth', 0.8);
-yline(0, 'k:', 'LineWidth', 0.8);
-xlabel('Frequency [Hz]');
-ylabel('Z_{in,active} [Ohm]');
-title('Real and Imaginary Parts');
-legend('Real', 'Imaginary', 'Location', 'northwest');
-
 figure;
 hold on; box on; grid on;
-plot(f, reflection_coeff, 'k-', 'LineWidth', 1.2);
-plot(f, transmission_coeff, 'k--', 'LineWidth', 0.9);
-plot(f, reflection_coeff.^2 + transmission_coeff.^2, 'r-', 'LineWidth', 1.2);
-xline(10e9, 'k:', 'LineWidth', 0.8);
+plot(f./1e9, reflection_coeff, 'k-', 'LineWidth', 1.2);
+plot(f./1e9, transmission_coeff, 'k--', 'LineWidth', 0.9);
+plot(f./1e9, reflection_coeff.^2 + transmission_coeff.^2, 'r-', 'LineWidth', 1.2);
+xline(10, 'k:', 'LineWidth', 0.8);
 yline(0, 'k:', 'LineWidth', 0.8);
-xlabel('Frequency [Hz]');
+ylim([0, 1.05]);
+xlabel('Frequency [GHz]');
 ylabel('Coefficients');
 title('Real and Imaginary Parts');
 legend('Reflection', 'Transmission', 'Conservation', 'Location', 'northwest');
